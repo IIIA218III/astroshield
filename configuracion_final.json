@@ -1,0 +1,107 @@
+{
+  "fitness": 85.37618317293288,
+  "coverage_score": 85.37618317293288,
+  "redundancy_penalty": 0.0,
+  "constraint_penalty": 0.0,
+  "num_violations": 0,
+  "is_valid": true,
+  "satellites": [
+    {
+      "id": 1,
+      "lat": -4.304099630716494,
+      "lon": -63.89112994013976
+    },
+    {
+      "id": 2,
+      "lat": 37.45075535086929,
+      "lon": -121.99357383661541
+    },
+    {
+      "id": 3,
+      "lat": 29.086667436727403,
+      "lon": -93.39204197640915
+    },
+    {
+      "id": 4,
+      "lat": 45.353481176987174,
+      "lon": 154.19605226248615
+    },
+    {
+      "id": 5,
+      "lat": -15.201030532999248,
+      "lon": 125.08428281475028
+    },
+    {
+      "id": 6,
+      "lat": -9.941191172967715,
+      "lon": 137.34078637320158
+    },
+    {
+      "id": 7,
+      "lat": 17.554357798282915,
+      "lon": 0.70600159553004
+    },
+    {
+      "id": 8,
+      "lat": -21.306786144906198,
+      "lon": 133.21250657918335
+    }
+  ],
+  "target_results": [
+    {
+      "name": "Península de Yucatán, México",
+      "priority": "Alta",
+      "weight": 3.0,
+      "nearest_sat": 3,
+      "min_dist_km": 1052.4145197518053,
+      "is_covered": true,
+      "quality": 0.771214234836564
+    },
+    {
+      "name": "Amazonía brasileña",
+      "priority": "Alta",
+      "weight": 3.0,
+      "nearest_sat": 1,
+      "min_dist_km": 228.0533391015249,
+      "is_covered": true,
+      "quality": 0.9504231871518424
+    },
+    {
+      "name": "California, Estados Unidos",
+      "priority": "Media",
+      "weight": 2.0,
+      "nearest_sat": 2,
+      "min_dist_km": 241.0469181963444,
+      "is_covered": true,
+      "quality": 0.9475984960442729
+    },
+    {
+      "name": "Región del Sahel, África",
+      "priority": "Media",
+      "weight": 2.0,
+      "nearest_sat": 7,
+      "min_dist_km": 293.8562159874194,
+      "is_covered": true,
+      "quality": 0.9361182139157784
+    },
+    {
+      "name": "Japón",
+      "priority": "Media",
+      "weight": 2.0,
+      "nearest_sat": 4,
+      "min_dist_km": 1711.2959814649419,
+      "is_covered": true,
+      "quality": 0.627979134464143
+    },
+    {
+      "name": "Interior de Australia",
+      "priority": "Normal",
+      "weight": 1.0,
+      "nearest_sat": 8,
+      "min_dist_km": 411.24065472872854,
+      "is_covered": true,
+      "quality": 0.9105998576676677
+    }
+  ],
+  "violations": []
+}
