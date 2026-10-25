@@ -95,12 +95,23 @@ def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> Tu
     return dist_km, dist_deg
 
 
-def geo_to_cartesian(lat: float, lon: float, radius: float = 1.0) -> Tuple[float, float, float]:
+def geo_to_cartesian(lat, lon, radius: float = 1.0) -> Tuple[Any, Any, Any]:
     """
     Convierte latitud y longitud en grados a coordenadas cartesianas 3D (X, Y, Z).
+    Soporta tanto escalares (float) como listas o arrays de NumPy.
     """
-    lat_r, lon_r = math.radians(lat), math.radians(lon)
-    x = radius * math.cos(lat_r) * math.cos(lon_r)
-    y = radius * math.cos(lat_r) * math.sin(lon_r)
-    z = radius * math.sin(lat_r)
-    return x, y, z
+    if hasattr(lat, '__iter__') or hasattr(lat, '__len__'):
+        import numpy as np
+        lat_r = np.radians(lat)
+        lon_r = np.radians(lon)
+        x = radius * np.cos(lat_r) * np.cos(lon_r)
+        y = radius * np.cos(lat_r) * np.sin(lon_r)
+        z = radius * np.sin(lat_r)
+        return x, y, z
+    else:
+        lat_r = math.radians(lat)
+        lon_r = math.radians(lon)
+        x = radius * math.cos(lat_r) * math.cos(lon_r)
+        y = radius * math.cos(lat_r) * math.sin(lon_r)
+        z = radius * math.sin(lat_r)
+        return x, y, z

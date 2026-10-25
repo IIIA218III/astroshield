@@ -1,4 +1,8 @@
 # 🛰️ AstroShield — Sistema de Optimización Evolutiva de Constelaciones (Entregable 2)
+Tuz Alpuche Angel Alberto
+Tinoco Valdez Javier Abraham
+Sanchez Lopez Luis Daniel
+Ibarra Ruiz Joaquin Enrique
 
 Este repositorio contiene la implementación completa y modular del sistema de búsqueda evolutiva para el diseño y optimización de una constelación de **8 satélites** orientada a la observación de **6 regiones terrestres de interés estratégico**, considerando restricciones severas por acumulación de desechos espaciales (*space debris*) y zonas de exclusión por objetos orbitales preexistentes.
 

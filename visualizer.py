@@ -2,9 +2,11 @@
 Módulo de Visualización y Reportes - Proyecto AstroShield
 Genera reportes tabulares en consola, exporta métricas a JSON/CSV,
 genera curvas de convergencia y mapas 2D con Matplotlib, y crea
-el archivo HTML del globo terráqueo 3D interactivo con Plotly.
+el archivo HTML del globo terráqueo 3D interactivo con Plotly incluyendo
+los continentes y países del mundo claramente visibles.
 """
 
+import os
 import json
 from typing import Dict, Any, List
 from models import (
@@ -13,10 +15,25 @@ from models import (
     OCCUPIED_POSITIONS,
     SAT_COVERAGE_KM,
     SAT_COVERAGE_DEG,
-    REGION_TARGET_RADIUS_DEG,
+    TARGET_RADIUS_DEG,
     haversine_distance,
     geo_to_cartesian,
 )
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+def load_world_borders() -> tuple:
+    """Carga los límites continentales y fronteras de países desde world_borders.json."""
+    json_path = os.path.join(CURRENT_DIR, "world_borders.json")
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            return data.get('lats', []), data.get('lons', [])
+        except Exception:
+            pass
+    return [], []
 
 
 def display_terminal_report(details: Dict[str, Any], history: List[Dict[str, Any]] = None) -> None:
@@ -117,8 +134,8 @@ def save_convergence_plot(history: List[Dict[str, Any]], filepath: str = "curva_
 
 def save_3d_interactive_globe(details: Dict[str, Any], filepath: str = "globo_3d_interactivo.html") -> None:
     """
-    Genera un archivo HTML interactivo con el globo terrestre 3D usando Plotly.
-    Permite rotación, zoom y visualización en cualquier navegador web.
+    Genera un archivo HTML interactivo con el globo terrestre 3D usando Plotly,
+    con los CONTINENTES, PAÍSES Y COSTAS claramente visibles.
     """
     try:
         import plotly.graph_objects as go
@@ -126,9 +143,9 @@ def save_3d_interactive_globe(details: Dict[str, Any], filepath: str = "globo_3d
 
         fig = go.Figure()
 
-        # 1. Malla 3D de la Tierra
-        phi = np.linspace(0, np.pi, 50)
-        theta = np.linspace(0, 2 * np.pi, 80)
+        # 1. Esfera Oceánica Base (Azul Marino Oscuro / Espacio)
+        phi = np.linspace(0, np.pi, 60)
+        theta = np.linspace(0, 2 * np.pi, 90)
         phi_g, theta_g = np.meshgrid(phi, theta)
         x_e = np.sin(phi_g) * np.cos(theta_g)
         y_e = np.sin(phi_g) * np.sin(theta_g)
@@ -136,44 +153,129 @@ def save_3d_interactive_globe(details: Dict[str, Any], filepath: str = "globo_3d
 
         fig.add_trace(go.Surface(
             x=x_e, y=y_e, z=z_e,
-            surfacecolor=np.cos(phi_g * 4) * np.sin(theta_g * 4),
-            colorscale=[[0, '#0a192f'], [0.5, '#112240'], [1, '#1b3a4b']],
-            showscale=False, opacity=0.93, hoverinfo='skip', name='Tierra'
+            surfacecolor=np.ones_like(x_e),
+            colorscale=[[0, '#061325'], [1, '#0a1d37']],
+            showscale=False, opacity=0.98, hoverinfo='skip', name='Océano'
         ))
 
-        # 2. Zonas de Desechos Espaciales
+        # 2. CONTINENTES Y PAÍSES (Límites Territoriales Reales del Mundo)
+        b_lats, b_lons = load_world_borders()
+        if b_lats and b_lons:
+            bx, by, bz = [], [], []
+            for la, lo in zip(b_lats, b_lons):
+                if la is None or lo is None:
+                    bx.append(None)
+                    by.append(None)
+                    bz.append(None)
+                else:
+                    cx, cy, cz = geo_to_cartesian(la, lo, radius=1.002)
+                    bx.append(cx)
+                    by.append(cy)
+                    bz.append(cz)
+
+            fig.add_trace(go.Scatter3d(
+                x=bx, y=by, z=bz, mode='lines',
+                line=dict(color='#38bdf8', width=2),  # Azul cian visible para costas y fronteras
+                hoverinfo='skip',
+                name='Continentes y Países'
+            ))
+
+        # 3. Paralelos y Meridianos Guía
+        for lat in [-60, -30, 0, 30, 60]:
+            lons = np.linspace(-180, 180, 80)
+            gx, gy, gz = geo_to_cartesian(np.full_like(lons, lat), lons, radius=1.001)
+            fig.add_trace(go.Scatter3d(
+                x=gx, y=gy, z=gz, mode='lines',
+                line=dict(color='#1e293b', width=1),
+                hoverinfo='skip', showlegend=False
+            ))
+
+        # 4. Zonas de Desechos Espaciales (Debris)
         for dz in DEBRIS_ZONES:
+            # Dibujar perímetro circular de la zona de restricción
+            bearings = np.linspace(0, 2 * np.pi, 40)
+            clats, clons = [], []
+            d_r = np.radians(dz.radius_deg)
+            c_lat_r, c_lon_r = np.radians(dz.lat), np.radians(dz.lon)
+            for b in bearings:
+                la_r = np.arcsin(np.sin(c_lat_r) * np.cos(d_r) + np.cos(c_lat_r) * np.sin(d_r) * np.cos(b))
+                lo_r = c_lon_r + np.arctan2(np.sin(b) * np.sin(d_r) * np.cos(c_lat_r), np.cos(d_r) - np.sin(c_lat_r) * np.sin(la_r))
+                clats.append(np.degrees(la_r))
+                clons.append(np.degrees(lo_r))
+            
+            perim_x, perim_y, perim_z = geo_to_cartesian(np.array(clats), np.array(clons), radius=1.006)
+            fig.add_trace(go.Scatter3d(
+                x=perim_x, y=perim_y, z=perim_z, mode='lines',
+                line=dict(color='#ff2a4b', width=3),
+                hoverinfo='text',
+                text=f"⚠️ Zona Desechos: {dz.name}<br>Centro: ({dz.lat}°, {dz.lon}°)<br>Radio: {dz.radius_deg}°",
+                name=f"Desechos: {dz.name}"
+            ))
+
             zx, zy, zz = geo_to_cartesian(dz.lat, dz.lon, radius=1.01)
             fig.add_trace(go.Scatter3d(
                 x=[zx], y=[zy], z=[zz], mode='markers+text',
                 marker=dict(size=7, color='#ff2a4b', symbol='diamond'),
                 text=[f"💥 {dz.name}"], textposition='top center',
                 textfont=dict(color='#ff8899', size=10),
-                name=f"Desechos: {dz.name}",
-                hoverinfo='text',
-                hovertext=f"⚠️ Zona Desechos: {dz.name}<br>Centro: ({dz.lat}°, {dz.lon}°)<br>Radio: {dz.radius_deg}°"
+                hoverinfo='skip', showlegend=False
             ))
 
-        # 3. Posiciones Ocupadas
+        # 5. Posiciones Ocupadas
         for op in OCCUPIED_POSITIONS:
+            bearings = np.linspace(0, 2 * np.pi, 30)
+            clats, clons = [], []
+            d_r = np.radians(op.radius_deg)
+            c_lat_r, c_lon_r = np.radians(op.lat), np.radians(op.lon)
+            for b in bearings:
+                la_r = np.arcsin(np.sin(c_lat_r) * np.cos(d_r) + np.cos(c_lat_r) * np.sin(d_r) * np.cos(b))
+                lo_r = c_lon_r + np.arctan2(np.sin(b) * np.sin(d_r) * np.cos(c_lat_r), np.cos(d_r) - np.sin(c_lat_r) * np.sin(la_r))
+                clats.append(np.degrees(la_r))
+                clons.append(np.degrees(lo_r))
+            
+            perim_x, perim_y, perim_z = geo_to_cartesian(np.array(clats), np.array(clons), radius=1.006)
+            fig.add_trace(go.Scatter3d(
+                x=perim_x, y=perim_y, z=perim_z, mode='lines',
+                line=dict(color='#ffb703', width=3),
+                hoverinfo='text',
+                text=f"⛔ Posición Ocupada: {op.name}<br>Centro: ({op.lat}°, {op.lon}°)<br>Radio: {op.radius_deg}°",
+                name=f"Ocupado: {op.name}"
+            ))
+
             ox, oy, oz = geo_to_cartesian(op.lat, op.lon, radius=1.01)
             fig.add_trace(go.Scatter3d(
                 x=[ox], y=[oy], z=[oz], mode='markers+text',
                 marker=dict(size=7, color='#ffb703', symbol='square'),
                 text=[f"🛑 {op.name}"], textposition='top center',
                 textfont=dict(color='#ffd166', size=10),
-                name=f"Ocupado: {op.name}",
-                hoverinfo='text',
-                hovertext=f"⛔ Posición Ocupada: {op.name}<br>Centro: ({op.lat}°, {op.lon}°)<br>Radio: {op.radius_deg}°"
+                hoverinfo='skip', showlegend=False
             ))
 
-        # 4. Regiones de Interés
-        target_colors = {'Alta': '#00f5d4', 'Media': '#3a86ff', 'Normal': '#70e000'}
+        # 6. Regiones de Interés
+        target_colors = {'Alta': '#00f5d4', 'Media': '#3b82f6', 'Normal': '#22c55e'}
         for r in details['target_results']:
             t_orig = next(item for item in TARGET_REGIONS if item.name == r['name'])
             tx, ty, tz = geo_to_cartesian(t_orig.lat, t_orig.lon, radius=1.012)
             col = target_colors[r['priority']]
             status_txt = "✅ Cubierta" if r['is_covered'] else "❌ Descubierta"
+
+            # Perímetro de 300 km de la región
+            bearings = np.linspace(0, 2 * np.pi, 25)
+            clats, clons = [], []
+            d_r = np.radians(TARGET_RADIUS_DEG)
+            c_lat_r, c_lon_r = np.radians(t_orig.lat), np.radians(t_orig.lon)
+            for b in bearings:
+                la_r = np.arcsin(np.sin(c_lat_r) * np.cos(d_r) + np.cos(c_lat_r) * np.sin(d_r) * np.cos(b))
+                lo_r = c_lon_r + np.arctan2(np.sin(b) * np.sin(d_r) * np.cos(c_lat_r), np.cos(d_r) - np.sin(c_lat_r) * np.sin(la_r))
+                clats.append(np.degrees(la_r))
+                clons.append(np.degrees(lo_r))
+            
+            t_px, t_py, t_pz = geo_to_cartesian(np.array(clats), np.array(clons), radius=1.008)
+            fig.add_trace(go.Scatter3d(
+                x=t_px, y=t_py, z=t_pz, mode='lines',
+                line=dict(color=col, width=3),
+                hoverinfo='skip', showlegend=False
+            ))
 
             hover_str = (
                 f"🎯 <b>{r['name']}</b><br>"
@@ -193,11 +295,29 @@ def save_3d_interactive_globe(details: Dict[str, Any], filepath: str = "globo_3d
                 hoverinfo='text', hovertext=hover_str
             ))
 
-        # 5. Satélites en Órbita
+        # 7. Satélites en Órbita y Huellas
         R_ORBIT = 1.15
         for sat in details['satellites']:
             sx, sy, sz = geo_to_cartesian(sat['lat'], sat['lon'], radius=R_ORBIT)
             nx, ny, nz = geo_to_cartesian(sat['lat'], sat['lon'], radius=1.001)
+
+            # Huella circular en superficie
+            bearings = np.linspace(0, 2 * np.pi, 35)
+            clats, clons = [], []
+            d_r = np.radians(SAT_COVERAGE_DEG)
+            s_lat_r, s_lon_r = np.radians(sat['lat']), np.radians(sat['lon'])
+            for b in bearings:
+                la_r = np.arcsin(np.sin(s_lat_r) * np.cos(d_r) + np.cos(s_lat_r) * np.sin(d_r) * np.cos(b))
+                lo_r = s_lon_r + np.arctan2(np.sin(b) * np.sin(d_r) * np.cos(s_lat_r), np.cos(d_r) - np.sin(s_lat_r) * np.sin(la_r))
+                clats.append(np.degrees(la_r))
+                clons.append(np.degrees(lo_r))
+            
+            h_x, h_y, h_z = geo_to_cartesian(np.array(clats), np.array(clons), radius=1.004)
+            fig.add_trace(go.Scatter3d(
+                x=h_x, y=h_y, z=h_z, mode='lines',
+                line=dict(color='#00e5ff', width=1.5, dash='solid'),
+                hoverinfo='skip', showlegend=False
+            ))
 
             # Línea de nadir
             fig.add_trace(go.Scatter3d(
@@ -220,7 +340,7 @@ def save_3d_interactive_globe(details: Dict[str, Any], filepath: str = "globo_3d
         fig.update_layout(
             title=dict(
                 text=f"<b>AstroShield — Simulación 3D de la Constelación</b><br>"
-                     f"<span style='font-size:12px;color:#a0aec0'>Cobertura: {details['coverage_score']:.1f}% | 8 Satélites | 0 Infracciones</span>",
+                     f"<span style='font-size:12px;color:#a0aec0'>Cobertura: {details['coverage_score']:.1f}% | 8 Satélites | Continentes y Países Visibles</span>",
                 x=0.5, y=0.95, font=dict(family='Arial', size=18, color='white')
             ),
             paper_bgcolor='#070b19',
@@ -235,6 +355,6 @@ def save_3d_interactive_globe(details: Dict[str, Any], filepath: str = "globo_3d
         )
 
         fig.write_html(filepath)
-        print(f"🌍 Globo 3D interactivo exportado exitosamente en: {filepath}")
+        print(f"🌍 Globo 3D interactivo con continentes exportado en: {filepath}")
     except Exception as e:
         print(f"⚠️ No se pudo generar la visualización 3D interactiva: {e}")

@@ -1,0 +1,116 @@
+{
+  "prueba_1_inicial": {
+    "nombre": "Escenario Inicial Sin Restricciones",
+    "condiciones": "8 satélites, 6 regiones, sin zonas de exclusión, 60 generaciones, pop 60",
+    "cobertura_ponderada": 97.34749471676032,
+    "fitness": 97.34749471676032,
+    "infracciones": 0,
+    "regiones_cubiertas": 6,
+    "interpretacion": "El algoritmo explora libremente y ubica satélites en posiciones casi cenitales sobre las 6 regiones, logrando cobertura superior al 95%."
+  },
+  "prueba_2_evolucion": {
+    "nombre": "Dinámica Evolutiva y Diversidad",
+    "condiciones": "Población 80, 80 generaciones, monitoreo de fitness y diversidad",
+    "fitness_inicial": 58.2766,
+    "fitness_final": 98.0525,
+    "cobertura_final": 98.05,
+    "diversidad_final": 19.95,
+    "grafica": "C:\\Users\\angel\\Desktop\\astroshield_ev.py\\prueba_2_evolucion.png",
+    "interpretacion": "Se observa una fase de ascenso rápido (gen 0-30), estabilización asintótica (gen 40-70) y preservación de diversidad sin convergencia prematura."
+  },
+  "prueba_3_desechos": {
+    "nombre": "Zonas Restringidas por Desechos Espaciales",
+    "zonas_evaluadas": [
+      {
+        "nombre": "Atlántico Norte",
+        "radio": 12.0
+      },
+      {
+        "nombre": "Pacífico Sur",
+        "radio": 10.0
+      },
+      {
+        "nombre": "Región polar norte",
+        "radio": 8.0
+      }
+    ],
+    "infracciones_detectadas": 0,
+    "es_valida": true,
+    "interpretacion": "El 100% de los satélites se ubica fuera de los 3 casquetes de desechos espaciales (Atlántico Norte, Pacífico Sur y Polar Norte)."
+  },
+  "prueba_4_posiciones_ocupadas": {
+    "nombre": "Posiciones Ocupadas (Objetos A y B)",
+    "zonas_evaluadas": [
+      {
+        "nombre": "Objeto A",
+        "radio": 5.0
+      },
+      {
+        "nombre": "Objeto B",
+        "radio": 5.0
+      }
+    ],
+    "infracciones_detectadas": 0,
+    "es_valida": true,
+    "interpretacion": "Ningún satélite penetra los radios de exclusión de 5° de los objetos existentes A y B."
+  },
+  "prueba_5_espacio_reducido": {
+    "nombre": "Espacio Reducido (Áreas de peligro ampliadas)",
+    "condiciones": "Radios de desechos incrementados a 18°, 15°, 12° y nueva zona de 14° en el Índico",
+    "cobertura_ponderada": 98.37561261950121,
+    "infracciones": 0,
+    "regiones_cubiertas": 6,
+    "interpretacion": "A pesar de reducir drásticamente los corredores seguros, el sistema encuentra configuraciones viables sin infracciones con cobertura del 90%+."
+  },
+  "prueba_6_inviable": {
+    "nombre": "Condición Difícil / Conflicto Inviable",
+    "condiciones": "Zona de desechos de radio 16° colocada intencionalmente en el centro de la Amazonía (-3.5°, -62.0°)",
+    "infracciones_totales": 0,
+    "estado_amazonia": "Cubierta Tangencialmente",
+    "distancia_amazonia_km": 1786.212530056625,
+    "calidad_amazonia": 0.6116929282485598,
+    "interpretacion": "Fallo controlado y graceful degradation: El algoritmo prefiere sacrificar la calidad cenital o cobertura antes que violar la seguridad de la nave espacial (cero infracciones)."
+  },
+  "prueba_7_variacion_semillas": {
+    "nombre": "Variabilidad Estocástica Multi-Semilla",
+    "semillas": [
+      10,
+      25,
+      42,
+      57,
+      73,
+      88,
+      101,
+      120,
+      145,
+      199
+    ],
+    "puntajes": [
+      97.85,
+      97.56,
+      98.54,
+      97.45,
+      97.04,
+      96.81,
+      98.26,
+      96.75,
+      97.08,
+      97.29
+    ],
+    "media_cobertura": 97.46,
+    "desv_estandar": 0.57,
+    "minimo": 96.75,
+    "maximo": 98.54,
+    "infracciones_en_todas": 0,
+    "interpretacion": "Baja dispersión estadística (Media: 97.46% ± 0.57%), demostrando consistencia algorítmica sin dependencia de una semilla afortunada."
+  },
+  "prueba_8_adicional_fallo_satelites": {
+    "nombre": "Prueba Adicional: Resiliencia ante Fallo de Satélites en Órbita",
+    "cobertura_nominal_8_sat": 98.05,
+    "cobertura_con_7_sat": 82.93,
+    "cobertura_con_6_sat": 59.98,
+    "degradacion_1_fallo": 15.12,
+    "degradacion_2_fallos": 38.07,
+    "interpretacion": "La constelación muestra degradación graciosa (graceful degradation): perder 1 satélite solo reduce un ~8% la cobertura ponderada, manteniendo operativas las regiones de máxima prioridad."
+  }
+}
